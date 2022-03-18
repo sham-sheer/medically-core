@@ -1,6 +1,7 @@
 version: 2.1
 jobs:
   build:
+    working_directory: ~/go/src/medically-core
     docker:
       - image: circleci/golang:1.17
     steps:
