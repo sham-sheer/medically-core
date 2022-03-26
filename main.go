@@ -17,7 +17,7 @@ import (
 func main() {
 	db, err := initStore()
 	if err != nil {
-		log.Fatalf("failed to initialise the store: %s", err)
+		log.Fatalf("Failed to initialise the store: %s", err)
 	}
 	defer db.Close()
 
