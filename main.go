@@ -25,7 +25,7 @@ func main() {
 	log.Println("Starting Server...")
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"message": "medically-core at your service!!",
+			"message": "medically-core at your service!",
 		})
 	})
 
