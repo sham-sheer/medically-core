@@ -13,10 +13,11 @@ services:
     ports:
       - 80:9000
     environment:
-      - DATABASE_URL=postgresql://root@db:26257?sslmode=disable
+      - DATABASE_URL=${DATABASE_URL:-postgresql://root@db:26257?sslmode=disable}
     deploy:
       restart_policy:
         condition: on-failure
+  # single node only to be used for development purposes
   roach:
     image: cockroachdb/cockroach:latest-v20.1
     container_name: roach
