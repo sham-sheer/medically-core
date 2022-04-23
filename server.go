@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/medically-core/model"
-	"github.com/julienschmidt/httprouter"
+	"medically-core/model"
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"gorm.io/gorm"
 )
 
@@ -21,7 +21,7 @@ func NewServer(db *gorm.DB) *Server {
 }
 
 // RegisterRouter registers a router onto the Server.
-func (s *Server) RegisterRouter(router *httprouter.Router) {
+func (s *Server) RegisterRouter(router *gin.Engine) {
 	router.GET("/ping", s.ping)
 
 	router.GET("/user", s.getUsers)
@@ -42,100 +42,262 @@ func (s *Server) RegisterRouter(router *httprouter.Router) {
 	router.PUT("/disease/:diseaseID", s.updateDisease)
 	router.DELETE("/disease/:diseasesID", s.deleteDisease)
 
-	router.GET("/clinic", s.getClinics)
-	router.POST("/clinic", s.createClinic)
-	router.GET("/clinic/:clinicID", s.getClinic)
-	router.PUT("/clinic/:clinicID", s.updateClinic)
-	router.DELETE("/clinic/:clinicID", s.deleteClinic)
+	// router.GET("/clinic", s.getClinics)
+	// router.POST("/clinic", s.createClinic)
+	// router.GET("/clinic/:clinicID", s.getClinic)
+	// router.PUT("/clinic/:clinicID", s.updateClinic)
+	// router.DELETE("/clinic/:clinicID", s.deleteClinic)
 }
 
 // ------------------------------- User Server Methods ------------------------------------//
-func (s *Server) getUsers(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (s *Server) getUsers(c *gin.Context) {
 	var users []model.User
 	if err := s.db.Find(&users).Error; err != nil {
-		http.Error(w, err.Error(), errToStatusCode(err))
-	} else {
-		writeJSONResult(w, users)
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	}
+	c.JSON(http.StatusOK, users)
 }
 
-func (s *Server) createUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (s *Server) createUser(c *gin.Context) {
 	var user model.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), errToStatusCode(err))
+	if err := BindJSON(c, &user); err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
 		return
 	}
 
 	if err := s.db.Create(&user).Error; err != nil {
-		http.Error(w, err.Error(), errToStatusCode(err))
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
+	}
+	c.JSON(http.StatusOK, user)
+
+}
+
+func (s *Server) getUser(c *gin.Context) {
+	id := c.Param("userID")
+	var user model.User
+	if err := s.db.Find(&user, id).Error; err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	} else {
-		writeJSONResult(w, user)
+		c.JSON(http.StatusOK, user)
 	}
 }
 
-func (s *Server) getUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (s *Server) updateUser(c *gin.Context) {
 	var user model.User
-	if err := s.db.Find(&user, ps.ByName("userID")).Error; err != nil {
-		http.Error(w, err.Error(), errToStatusCode(err))
-	} else {
-		writeJSONResult(w, user)
-	}
-}
-
-func (s *Server) updateUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var user model.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), errToStatusCode(err))
+	if err := BindJSON(c, &user); err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
 		return
 	}
 
 	if err := s.db.Save(user).Error; err != nil {
-		http.Error(w, err.Error(), errToStatusCode(err))
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	} else {
-		writeJSONResult(w, user)
+		c.JSON(http.StatusOK, user)
 	}
 }
 
-func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	userID := ps.ByName("userID")
+func (s *Server) deleteUser(c *gin.Context) {
+	userID := c.Param("userID")
 	req := s.db.Delete(model.User{}, "ID = ?", userID)
 	if err := req.Error; err != nil {
-		http.Error(w, err.Error(), errToStatusCode(err))
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	} else if req.RowsAffected == 0 {
-		http.Error(w, "", http.StatusNotFound)
+		c.String(http.StatusNotFound, fmt.Sprintf("error: %s", err))
 	} else {
-		writeTextResult(w, "ok")
+		c.JSON(http.StatusOK, gin.H{"userId": userID})
 	}
 }
 
 // ------------------------------- ------------------- ------------------------------------//
 
 // ----------------------------  Medication Server Methods ---------------------------------//
+func (s *Server) getMeds(c *gin.Context) {
+	var meds []model.Med
+	if err := s.db.Find(&meds).Error; err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
+	}
+	c.JSON(http.StatusOK, meds)
+}
+
+func (s *Server) createMed(c *gin.Context) {
+	var med model.Med
+	if err := BindJSON(c, &med); err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
+		return
+	}
+
+	if err := s.db.Create(&med).Error; err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
+	}
+	c.JSON(http.StatusOK, med)
+}
+
+func (s *Server) getMed(c *gin.Context) {
+	var med model.Med
+	if err := s.db.Find(&med, c.Param("medID")).Error; err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
+	} else {
+		c.JSON(http.StatusOK, med)
+	}
+}
+
+func (s *Server) updateMed(c *gin.Context) {
+	var med model.Med
+	if err := BindJSON(c, &med); err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
+		return
+	}
+
+	if err := s.db.Save(med).Error; err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
+	} else {
+		c.JSON(http.StatusOK, med)
+	}
+}
+
+func (s *Server) deleteMed(c *gin.Context) {
+	medID := c.Param("medID")
+	req := s.db.Delete(model.Med{}, "ID = ?", medID)
+	if err := req.Error; err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
+	} else if req.RowsAffected == 0 {
+		c.String(http.StatusNotFound, fmt.Sprintf("error: %s", err))
+	} else {
+		c.JSON(http.StatusOK, medID)
+	}
+}
+
 // ------------------------------- ------------------- ------------------------------------//
 
 // ----------------------------  Disease Server Methods ---------------------------------//
+func (s *Server) getDiseases(c *gin.Context) {
+	var diseases []model.Disease
+	if err := s.db.Find(&diseases).Error; err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
+	} else {
+		c.JSON(http.StatusOK, diseases)
+	}
+}
+
+func (s *Server) createDisease(c *gin.Context) {
+	var disease model.Disease
+	if err := BindJSON(c, &disease); err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
+		return
+	}
+
+	if err := s.db.Create(&disease).Error; err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
+	}
+	c.JSON(http.StatusOK, disease)
+}
+
+func (s *Server) getDisease(c *gin.Context) {
+	var disease model.Disease
+	if err := s.db.Find(&disease, c.Param("diseaseID")).Error; err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
+	} else {
+		c.JSON(http.StatusOK, disease)
+	}
+}
+
+func (s *Server) updateDisease(c *gin.Context) {
+	var disease model.Disease
+	if err := BindJSON(c, &disease); err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
+		return
+	}
+
+	if err := s.db.Save(disease).Error; err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
+	} else {
+		c.JSON(http.StatusOK, disease)
+	}
+}
+
+func (s *Server) deleteDisease(c *gin.Context) {
+	diseaseID := c.Param("diseaseID")
+	req := s.db.Delete(model.Disease{}, "ID = ?", diseaseID)
+	if err := req.Error; err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
+	} else if req.RowsAffected == 0 {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
+	} else {
+		c.JSON(http.StatusOK, diseaseID)
+	}
+}
 // ------------------------------- ------------------- ------------------------------------//
 
 // ---------------------------- Clinic Server Methods ---------------------------------//
+// func (s *Server) getClinics(c *gin.Context) {
+// 	var clinics []model.Clinic
+// 	if err := s.db.Find(&clinics).Error; err != nil {
+// 		http.Error(w, err.Error(), errToStatusCode(err))
+// 	} else {
+// 		writeJSONResult(w, clinics)
+// 	}
+// }
+
+// func (s *Server) createClinic(c *gin.Context) {
+// 	var clinic model.Clinic
+// 	if err := json.NewDecoder(r.Body).Decode(&clinic); err != nil {
+// 		http.Error(w, err.Error(), errToStatusCode(err))
+// 		return
+// 	}
+
+// 	if err := s.db.Create(&clinic).Error; err != nil {
+// 		http.Error(w, err.Error(), errToStatusCode(err))
+// 	} else {
+// 		writeJSONResult(w, clinic)
+// 	}
+// }
+
+// func (s *Server) getClinic(c *gin.Context) {
+// 	var clinic model.Clinic
+// 	if err := s.db.Find(&clinic, ps.ByName("medID")).Error; err != nil {
+// 		http.Error(w, err.Error(), errToStatusCode(err))
+// 	} else {
+// 		writeJSONResult(w, clinic)
+// 	}
+// }
+
+// func (s *Server) updateClinic(c *gin.Context) {
+// 	var clinic model.Clinic
+// 	if err := json.NewDecoder(r.Body).Decode(&clinic); err != nil {
+// 		http.Error(w, err.Error(), errToStatusCode(err))
+// 		return
+// 	}
+
+// 	if err := s.db.Save(clinic).Error; err != nil {
+// 		http.Error(w, err.Error(), errToStatusCode(err))
+// 	} else {
+// 		writeJSONResult(w, clinic)
+// 	}
+// }
+
+// func (s *Server) deleteClinic(c *gin.Context) {
+// 	clinicID := ps.ByName("clinicID")
+// 	req := s.db.Delete(model.Disease{}, "ID = ?", clinicID)
+// 	if err := req.Error; err != nil {
+// 		http.Error(w, err.Error(), errToStatusCode(err))
+// 	} else if req.RowsAffected == 0 {
+// 		http.Error(w, "", http.StatusNotFound)
+// 	} else {
+// 		writeTextResult(w, "ok")
+// 	}
+// }
 // ------------------------------- ------------------- ------------------------------------//
 
 
-func (s *Server) ping(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	writeTextResult(w, "go/gorm")
+func (s *Server) ping(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"status": "service ready to go!"})
 }
 
-func writeTextResult(w http.ResponseWriter, res string) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, res)
-}
-
-func writeJSONResult(w http.ResponseWriter, res interface{}) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		panic(err)
+func BindJSON(c *gin.Context, obj interface{}) (err error) {
+	if err = c.ShouldBindWith(obj, binding.JSON); err != nil {
+		return err
 	}
+	return
 }
 
 func writeMissingParamError(w http.ResponseWriter, paramName string) {

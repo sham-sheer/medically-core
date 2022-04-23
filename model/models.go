@@ -8,8 +8,8 @@ type User struct {
 	Contact *string `json:"contact" gorm:"not null"`
 }
 
-// Medication is a model in the "medications" table.
-type Medication struct {
+// Med is a model in the "medications" table.
+type Med struct {
 	ID    int     `json:"id,omitempty"`
 	Name  *string `json:"name"  gorm:"not null"`
 	Desc  *string `json:"desc" 	gorm:"not null"`
