@@ -1,4 +1,4 @@
-package model
+package main
 
 // User is a model in the "users" table.
 type User struct {

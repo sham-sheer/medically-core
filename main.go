@@ -4,7 +4,6 @@ import (
 	"flag"
 	"log"
 	"fmt"
-	"medically-core/model"
 
 	"net/http"
 	"github.com/gin-gonic/gin"
@@ -36,7 +35,7 @@ func setupDB(addr string) *gorm.DB {
 	}
 
 	// Migrate the schema
-	if err := db.AutoMigrate(&model.User{}, &model.Disease{}, &model.Med{}); err != nil {
+	if err := db.AutoMigrate(&User{}, &Disease{}, &Med{}); err != nil {
 		panic(err)
 	}
 

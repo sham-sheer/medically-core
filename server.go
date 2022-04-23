@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"medically-core/model"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"gorm.io/gorm"
@@ -51,7 +50,7 @@ func (s *Server) RegisterRouter(router *gin.Engine) {
 
 // ------------------------------- User Server Methods ------------------------------------//
 func (s *Server) getUsers(c *gin.Context) {
-	var users []model.User
+	var users []User
 	if err := s.db.Find(&users).Error; err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	}
@@ -59,7 +58,7 @@ func (s *Server) getUsers(c *gin.Context) {
 }
 
 func (s *Server) createUser(c *gin.Context) {
-	var user model.User
+	var user User
 	if err := BindJSON(c, &user); err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
 		return
@@ -74,7 +73,7 @@ func (s *Server) createUser(c *gin.Context) {
 
 func (s *Server) getUser(c *gin.Context) {
 	id := c.Param("userID")
-	var user model.User
+	var user User
 	if err := s.db.Find(&user, id).Error; err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	} else {
@@ -83,7 +82,7 @@ func (s *Server) getUser(c *gin.Context) {
 }
 
 func (s *Server) updateUser(c *gin.Context) {
-	var user model.User
+	var user User
 	if err := BindJSON(c, &user); err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
 		return
@@ -98,7 +97,7 @@ func (s *Server) updateUser(c *gin.Context) {
 
 func (s *Server) deleteUser(c *gin.Context) {
 	userID := c.Param("userID")
-	req := s.db.Delete(model.User{}, "ID = ?", userID)
+	req := s.db.Delete(User{}, "ID = ?", userID)
 	if err := req.Error; err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	} else if req.RowsAffected == 0 {
@@ -112,7 +111,7 @@ func (s *Server) deleteUser(c *gin.Context) {
 
 // ----------------------------  Medication Server Methods ---------------------------------//
 func (s *Server) getMeds(c *gin.Context) {
-	var meds []model.Med
+	var meds []Med
 	if err := s.db.Find(&meds).Error; err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	}
@@ -120,7 +119,7 @@ func (s *Server) getMeds(c *gin.Context) {
 }
 
 func (s *Server) createMed(c *gin.Context) {
-	var med model.Med
+	var med Med
 	if err := BindJSON(c, &med); err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
 		return
@@ -133,7 +132,7 @@ func (s *Server) createMed(c *gin.Context) {
 }
 
 func (s *Server) getMed(c *gin.Context) {
-	var med model.Med
+	var med Med
 	if err := s.db.Find(&med, c.Param("medID")).Error; err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	} else {
@@ -142,7 +141,7 @@ func (s *Server) getMed(c *gin.Context) {
 }
 
 func (s *Server) updateMed(c *gin.Context) {
-	var med model.Med
+	var med Med
 	if err := BindJSON(c, &med); err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
 		return
@@ -157,7 +156,7 @@ func (s *Server) updateMed(c *gin.Context) {
 
 func (s *Server) deleteMed(c *gin.Context) {
 	medID := c.Param("medID")
-	req := s.db.Delete(model.Med{}, "ID = ?", medID)
+	req := s.db.Delete(Med{}, "ID = ?", medID)
 	if err := req.Error; err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	} else if req.RowsAffected == 0 {
@@ -171,7 +170,7 @@ func (s *Server) deleteMed(c *gin.Context) {
 
 // ----------------------------  Disease Server Methods ---------------------------------//
 func (s *Server) getDiseases(c *gin.Context) {
-	var diseases []model.Disease
+	var diseases []Disease
 	if err := s.db.Find(&diseases).Error; err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
 	} else {
@@ -180,7 +179,7 @@ func (s *Server) getDiseases(c *gin.Context) {
 }
 
 func (s *Server) createDisease(c *gin.Context) {
-	var disease model.Disease
+	var disease Disease
 	if err := BindJSON(c, &disease); err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
 		return
@@ -193,7 +192,7 @@ func (s *Server) createDisease(c *gin.Context) {
 }
 
 func (s *Server) getDisease(c *gin.Context) {
-	var disease model.Disease
+	var disease Disease
 	if err := s.db.Find(&disease, c.Param("diseaseID")).Error; err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
 	} else {
@@ -202,7 +201,7 @@ func (s *Server) getDisease(c *gin.Context) {
 }
 
 func (s *Server) updateDisease(c *gin.Context) {
-	var disease model.Disease
+	var disease Disease
 	if err := BindJSON(c, &disease); err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
 		return
@@ -217,7 +216,7 @@ func (s *Server) updateDisease(c *gin.Context) {
 
 func (s *Server) deleteDisease(c *gin.Context) {
 	diseaseID := c.Param("diseaseID")
-	req := s.db.Delete(model.Disease{}, "ID = ?", diseaseID)
+	req := s.db.Delete(Disease{}, "ID = ?", diseaseID)
 	if err := req.Error; err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("error: %s", err))
 	} else if req.RowsAffected == 0 {
@@ -298,17 +297,4 @@ func BindJSON(c *gin.Context, obj interface{}) (err error) {
 		return err
 	}
 	return
-}
-
-func writeMissingParamError(w http.ResponseWriter, paramName string) {
-	http.Error(w, fmt.Sprintf("missing query param %q", paramName), http.StatusBadRequest)
-}
-
-func errToStatusCode(err error) int {
-	switch err {
-	case gorm.ErrRecordNotFound:
-		return http.StatusNotFound
-	default:
-		return http.StatusInternalServerError
-	}
 }
