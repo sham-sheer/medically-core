@@ -11,13 +11,9 @@ services:
     networks:
       - mynet
     ports:
-      - 80:8080
+      - 80:9000
     environment:
-      - PGUSER=${PGUSER:-test}
-      - PGPASSWORD=${PGPASSWORD:?database password not set}
-      - PGHOST=${PGHOST:-db}
-      - PGPORT=${PGPORT:-26257}
-      - PGDATABASE=${PGDATABASE:-mydb}
+      - DATABASE_URL=postgresql://root@db:26257?sslmode=disable
     deploy:
       restart_policy:
         condition: on-failure
